@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+
+  postgres:
+    restart: always
+    image: postgres:latest
+    ports: 
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes: 
+      - ./internal/pg/data:/var/lib/postgresql/data
+
+  yotubeapi:
+    depends_on: 
+      - postgres
+    build: ./
+    ports: 
+      - "8080:8080"
+    environment:
+      DB_USERNAME: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_DB: "postgres"
+      DB_HOST: "postgres"
+      DB_TABLE: "postgres"
+      DB_PORT: "5432"
+    command: ./wait-for-postgres.sh postgres ./ytapi
