@@ -1,6 +1,6 @@
 <p align="center">
   <a href="" rel="noopener">
- <img width=600px height=400px src="https://github.com/honyshyota/tube-api/blob/master/images/super_gopher.webp" alt="Project logo"></a>
+ <img width=400px height=400px src="https://github.com/honyshyota/tube-api/blob/master/images/super_gopher.webp" alt="Project logo"></a>
 </p>
 
 
