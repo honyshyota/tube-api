@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,6 +22,8 @@ const (
 	ctxKeyVideo ctxKey = iota
 	ctxKeyRequestID
 )
+
+const MaxResult = 10
 
 type ctxKey int8
 
@@ -58,6 +59,7 @@ func (srv *server) configureRouter() {
 
 	srv.router.HandleFunc("/search", srv.handleChannelSearch()).Methods("GET")
 	srv.router.HandleFunc("/video", srv.handleVideoSearch()).Methods("GET")
+	srv.router.HandleFunc("/playlist", srv.handlePlaylistSearch()).Methods("GET")
 }
 
 func (srv *server) setRequestID(next http.Handler) http.Handler {
@@ -105,12 +107,6 @@ func (srv *server) handleChannelSearch() http.HandlerFunc {
 			return
 		}
 
-		MaxResult, err := strconv.Atoi(os.Getenv("MAX_RESULTS"))
-		if err != nil {
-			srv.error(w, r, http.StatusInternalServerError, err)
-			return
-		}
-
 		list := make([]string, 2)
 		list[0] = "id"
 		list[1] = "snippet"
@@ -133,6 +129,7 @@ func (srv *server) handleChannelSearch() http.HandlerFunc {
 		}
 
 		srv.respond(w, r, http.StatusFound, resultSch)
+
 	}
 }
 
@@ -149,7 +146,7 @@ func (srv *server) handleVideoSearch() http.HandlerFunc {
 			return
 		}
 
-		channel, err := srv.store.Repo().Find(req.ID)
+		channel, err := srv.store.Repo().FindChannel(req.ID)
 		if err != nil {
 			srv.error(w, r, http.StatusNotFound, err)
 			return
@@ -158,12 +155,6 @@ func (srv *server) handleVideoSearch() http.HandlerFunc {
 		list := make([]string, 2)
 		list[0] = "id"
 		list[1] = "snippet"
-
-		MaxResult, err := strconv.Atoi(os.Getenv("MAX_RESULTS"))
-		if err != nil {
-			srv.error(w, r, http.StatusInternalServerError, err)
-			return
-		}
 
 		call := srv.youtube.Search.List(list).
 			ChannelId(channel.ChannelID).
@@ -185,6 +176,57 @@ func (srv *server) handleVideoSearch() http.HandlerFunc {
 			sch.Description = item.Snippet.Description
 			resultSch = append(resultSch, sch)
 			srv.store.Repo().CreateVideos(sch)
+		}
+
+		srv.respond(w, r, http.StatusFound, resultSch)
+	}
+}
+
+func (srv *server) handlePlaylistSearch() http.HandlerFunc {
+	type request struct {
+		ID int `json:"id,string"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &request{}
+
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			srv.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		channel, err := srv.store.Repo().FindChannel(req.ID)
+		if err != nil {
+			srv.error(w, r, http.StatusNotFound, err)
+			return
+		}
+
+		list := make([]string, 4)
+		list[0] = "id"
+		list[1] = "snippet"
+		list[2] = "player"
+		list[3] = "contentDetails"
+
+		call := srv.youtube.Playlists.List(list).
+			ChannelId(channel.ChannelID).
+			MaxResults(int64(MaxResult))
+
+		response, err := call.Do()
+		if err != nil {
+			srv.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		var resultSch []*model.Playlist
+
+		for _, item := range response.Items {
+			sch := &model.Playlist{}
+			sch.PlaylistID = item.Id
+			sch.PlaylistTitle = item.Snippet.Title
+			sch.EmbededHTML = item.Player.EmbedHtml
+			sch.VideoCount = int(item.ContentDetails.ItemCount)
+			resultSch = append(resultSch, sch)
+			srv.store.Repo().CreatePlaylist(sch)
 		}
 
 		srv.respond(w, r, http.StatusFound, resultSch)

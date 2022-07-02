@@ -14,3 +14,11 @@ type Video struct {
 	PublishDate string `json:"publish_at"`
 	Description string `json:"description"`
 }
+
+type Playlist struct {
+	ID            int    `json:"id"`
+	PlaylistID    string `json:"playlist_id"`
+	PlaylistTitle string `json:"play_title"`
+	EmbededHTML   string `json:"embeded"`
+	VideoCount    int    `json:"video_count"`
+}

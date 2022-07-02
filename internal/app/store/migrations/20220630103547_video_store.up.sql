@@ -12,3 +12,11 @@ CREATE TABLE videos (
     publish_date varchar,
     video_info text
 );
+
+CREATE TABLE playlist (
+    id bigserial not null,
+    playlist_id varchar,
+    playlist_title text,
+    embeded_html text,
+    video_count bigint
+);

@@ -1,0 +1,5 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/honyshyota/github.com/honyshyota/tube-api-go'
+sudo docker-compose up  --remove-orphans --build
+make: Leaving directory '/home/honyshyota/github.com/honyshyota/tube-api-go'
+ 
