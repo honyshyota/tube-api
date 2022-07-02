@@ -58,12 +58,10 @@ func runPgMigrations(pgURL string) error {
 	MigrationsPath := os.Getenv("PG_MIGRATIONS_PATH")
 
 	if MigrationsPath == "" {
-		fmt.Println(1)
 		return nil
 	}
 
 	if pgURL == "" {
-		fmt.Println(2)
 		return errors.New("no cfg.PgURL provided")
 	}
 
@@ -72,12 +70,10 @@ func runPgMigrations(pgURL string) error {
 		pgURL,
 	)
 	if err != nil {
-		fmt.Println(3)
 		return err
 	}
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		fmt.Println(4)
 		return err
 	}
 

@@ -3,7 +3,6 @@ package pgstore
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/honyshyota/tube-api-go/internal/app/model"
 )
@@ -75,7 +74,6 @@ func (r *Repository) FindVideo(id int) (*model.Video, error) {
 }
 
 func (r *Repository) CreatePlaylist(p *model.Playlist) error {
-	fmt.Println(1)
 	return r.store.db.QueryRow(
 		"INSERT INTO playlist (playlist_id, playlist_title, embeded_html, video_count) VALUES ($1, $2, $3, $4) RETURNING id",
 		p.PlaylistID,
